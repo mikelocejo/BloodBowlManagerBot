@@ -1,4 +1,6 @@
 import goblinSpy, re, discord, os, requests, bloodBowl
+from discord.utils import get
+
 class Commands:
     def __init__(self, ctx):
         self.ctx = ctx
@@ -114,14 +116,15 @@ class Commands:
             goblin_data = goblin.Get_Goblin_Data()
             if goblin_data:
                 data_teams = goblin_data['LeagueStandings']
-                #TODO Modify format
                 teams = ""
                 coach = ""
                 ranking = ""
                 for index in range (0, len(data_teams["rows"])):
-                    teams += "%s%s\n" %(bloodBowl.Get_Race(int(data_teams["rows"][index][16])), data_teams["rows"][index][17])
-                    coach += "%s\n" % data_teams["rows"][index][10]
-                    ranking += "%s\n" % (bloodBowl.Get_Ranking(index + 1))
+                    race_logo = get(self.ctx.message.guild.emojis, name=bloodBowl.Get_Race(int(data_teams["rows"][index][16])))
+                    if not race_logo: race_logo = ":grey_question:"
+                    teams += "%s %s\n\n" %(race_logo, data_teams["rows"][index][17])
+                    coach += "%s\n\n" % data_teams["rows"][index][10]
+                    ranking += "%s\n\n" % (bloodBowl.Get_Ranking(index + 1))
                 embed = discord.Embed(
                    colour = discord.Colour.red(),
                    title = "Teams on %s" % goblin.tournament,
@@ -166,23 +169,20 @@ class Commands:
                         next_matches.append(match)
                     if match[8] > actual_round:
                         break
-                # Add local team and visitor team (and result if the match has ended) on respective strings. Every string will be a diferent column on embed message
+                # Add local team and visitor team (and result if the match has ended) on respective strings. Every string will be on a different column on embed message
                 local_teams = ""
                 visitor_teams = ""
                 results = ""
                 for match in next_matches:
-                    local_teams += "(%s) %s\n\n" % (match[17], match[19] )
-                    visitor_teams += " %s (%s) \n\n" % (  match[25], match[23])
+                    local_teams += "%s\n\n" % (match[19] )
+                    visitor_teams += " %s\n\n" % (  match[25],)
                     if match[10] == 'played':
                         results += "%i - %i\n\n" % (int(match[29]), int(match[30]))
                     else:
                         results += "? - ?\n\n"
-
                 embed.add_field(name = "Local Team", value=local_teams, inline=True)
                 embed.add_field(name = "VS", value=results, inline=True)
                 embed.add_field(name = "Visitor Team", value=visitor_teams, inline=True)
-
-
                 await self.ctx.send(embed=embed)
                 
             else:
