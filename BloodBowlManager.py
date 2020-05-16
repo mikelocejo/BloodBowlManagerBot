@@ -16,15 +16,7 @@ class Bot:
             print('Bot up!')
         @self.client.command()
         async def help(ctx):
-            embed = discord.Embed(
-                colour = discord.Colour.red(),
-                title="Blood Bowl Manager Commands",
-                description=""
-            )
-            embed.set_thumbnail(url="https://i.imgur.com/dTlJWXL.png")
-            embed.add_field(name="Chapter 1: Set up your tournament", value="Check the firsts steps using ")
-            await ctx.send(embed =embed)
-
+            await commandModule.Commands(ctx).help()
         @self.client.command()
         async def config(ctx):
             await commandModule.Commands(ctx).configure()
