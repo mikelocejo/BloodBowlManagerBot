@@ -65,3 +65,6 @@ Currently, the following commands has been implemented:
 ## DEVELOPED BY
 * [Paula (Latra) Gallucci Zurita](https://github.com/latra)
 * [Mikel (Mikel) Ocejo](https://github.com/mikel-ocejo)
+
+## ACKNOWLEDGMENT TO
+* [Andreas (Mordrek) Harrison](https://github.com/mordrek) for [GoblinSpy](http://www.mordrek.com/goblinSpy)
