@@ -115,12 +115,22 @@ class Commands:
             if goblin_data:
                 data_teams = goblin_data['LeagueStandings']
                 #TODO Modify format
-                teams = ('Teams on %s:\n' % goblin.league_name)
-                ranking = 1
-                for team in data_teams["rows"]:
-                    teams += ("#%i %s%s (%s)\n" % (ranking, bloodBowl.Get_Race(int(team[16])), team[17], team[10]))
-                    ranking += 1
-                await self.ctx.send(content=teams)
+                teams = ""
+                coach = ""
+                ranking = ""
+                for index in range (0, len(data_teams["rows"])):
+                    teams += "%s%s\n" %(bloodBowl.Get_Race(int(data_teams["rows"][index][16])), data_teams["rows"][index][17])
+                    coach += "%s\n" % data_teams["rows"][index][10]
+                    ranking += "%s\n" % (bloodBowl.Get_Ranking(index + 1))
+                embed = discord.Embed(
+                   colour = discord.Colour.red(),
+                   title = "Teams on %s" % goblin.tournament,
+                )
+                embed.add_field(name = ":trophy:", value=ranking, inline=True)
+                embed.add_field(name = "Team name", value=teams, inline=True)
+                embed.add_field(name = "Coach", value=coach, inline=True)
+
+                await self.ctx.send(embed=embed)
             else:
                 await self.ctx.send(content="Error al recuperar los datos de la liga. Asegurate que ha sido dada de alta en: http://www.mordrek.com/goblinSpy/web/goblinSpy.html")
     async def round(self):
@@ -134,6 +144,9 @@ class Commands:
             if goblin_data and goblin_data["Schedule"]:
                 next_matches = []
                 command = self.ctx.message.content.split()
+                embed = discord.Embed(
+                   colour = discord.Colour.red()
+                )
                 if len(command) == 1:
                     actual_round = 0
                     # If no round has been specifyied, it will calculate the current round
@@ -141,21 +154,36 @@ class Commands:
                         if match[10] == 'scheduled' and (match[8] == actual_round or actual_round == 0):
                             actual_round = match[8]
                             break
+                    embed.title="Current round: Round %s" % actual_round
+
                 else:
                     # Else specify the round
                     actual_round = command[1]
+                    embed.title="Round %s" % actual_round
+
                 for match in goblin_data["Schedule"]["rows"]:
                     if match[8] == actual_round:
                         next_matches.append(match)
                     if match[8] > actual_round:
                         break
-                #TODO Modify format
-                response = 'Current Round (round %i):\n' % int(actual_round)
+                # Add local team and visitor team (and result if the match has ended) on respective strings. Every string will be a diferent column on embed message
+                local_teams = ""
+                visitor_teams = ""
+                results = ""
                 for match in next_matches:
+                    local_teams += "(%s) %s\n\n" % (match[17], match[19] )
+                    visitor_teams += " %s (%s) \n\n" % (  match[25], match[23])
                     if match[10] == 'played':
-                        response += '%s (%s) %i VS %i %s (%s)\n'% (match[19], match[17], int(match[29]), int(match[30]) ,  match[25], match[23])
+                        results += "%i - %i\n\n" % (int(match[29]), int(match[30]))
                     else:
-                        response += '%s (%s) VS %s (%s)\n' % (match[19], match[17], match[25], match[23])
-                await self.ctx.send(content=response)
+                        results += "? - ?\n\n"
+
+                embed.add_field(name = "Local Team", value=local_teams, inline=True)
+                embed.add_field(name = "VS", value=results, inline=True)
+                embed.add_field(name = "Visitor Team", value=visitor_teams, inline=True)
+
+
+                await self.ctx.send(embed=embed)
+                
             else:
                 await self.ctx.send(content="No hay datos de la liga o no se trata de una liga con rondas")
