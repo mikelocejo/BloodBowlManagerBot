@@ -62,4 +62,6 @@ Currently, the following commands has been implemented:
      - Example: bb2!round 3
 
 
-
+## DEVELOPED BY
+* [Paula (Latra) Gallucci Zurita](https://github.com/latra)
+* [Mikel (Mikel) Ocejo](https://github.com/mikel-ocejo)
