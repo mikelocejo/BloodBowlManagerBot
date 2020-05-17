@@ -42,8 +42,8 @@ class GoblinSpy:
         # Delete a config entry
         try:
             cursor = self.database.cursor()
-            print(self.discord_id)
-            cursor.execute('DELETE FROM tournaments WHERE idDiscord=\'%s\';' % self.discord_id)
+            cursor.execute('DELETE FROM tournaments WHERE idDiscord=\'%s\'; ' +
+                'DELETE FROM coaches WHERE idDiscord=\'%s\'' % self.discord_id, self.discord_id)
             self.database.commit()
             cursor.close()
         except:
@@ -64,3 +64,37 @@ class GoblinSpy:
             return goblin_request.json()
         else:
             return None
+
+    def Get_Coach(self, bb_coach):
+        # Recovers a discord user name from coach if he's already registered (uning !iam command)
+        query = "SELECT discordName FROM coaches WHERE coachName = '%s' AND idDiscord = '%s';" % (bb_coach, self.discord_id)
+        cursor = self.database.cursor()
+        result = cursor.execute(query).fetchone()
+        cursor.close()
+        if result: return result
+        else: return bb_coach
+
+    def Set_Coach(self, bb_coach, discord_name, discord_user_id):
+        coach = self.Get_Coach(bb_coach)
+        if coach != bb_coach and coach[0] != discord_name: 
+            return "This coach is already registered. If it's your coach name, talk with an administrator."
+        elif self.User_Registered(discord_name): 
+            query = "UPDATE coaches SET coachName = '%s' WHERE discordName = '%s' AND idDiscord='%s';" % (bb_coach,discord_name, self.discord_id)
+            result =  "Your coach name has been updated"
+        else: 
+            query = "INSERT INTO coaches (idDiscord, coachName, discordName, discordUserId) VALUES ('%s', '%s', '%s', '%s')" % (self.discord_id, bb_coach, discord_name, discord_user_id)
+            result = "You has been registered successfully!"
+        cursor = self.database.cursor()
+        cursor.execute(query)
+        self.database.commit()
+        cursor.close()
+        return result
+
+    def User_Registered(self, discord_name):
+        query = "SELECT coachName FROM coaches WHERE discordName = '%s' AND idDiscord = '%s';" % (discord_name, self.discord_id)
+        cursor = self.database.cursor()
+        result = cursor.execute(query).fetchone()
+        cursor.close()
+        print(result)
+        if result: return result
+        else: return None

@@ -36,7 +36,11 @@ class Bot:
         #Command to show the current round or the specified by parameter
         async def round(ctx):
             await commandModule.Commands(ctx).round()
+        @self.client.command()
+        async def iam(ctx):
+            await commandModule.Commands(ctx).this_is_my_team()
 
+        
     def run(self):
         self.client.run(self.token)
 

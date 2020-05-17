@@ -1,3 +1,4 @@
+import sqlite3, os
 def Get_Race(race_id):
 
     #This dict should be in static file
@@ -12,3 +13,6 @@ def Get_Ranking(position_num):
     position = position_dict.get(position_num)
     if position: return position
     else: return "#%i" % position_num
+
+
+    

@@ -3,7 +3,9 @@ from dotenv import load_dotenv
 import sqlite3, os
 
 QUERYS = [  'CREATE TABLE "tournaments" ' +
-                '("id"  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"idDiscord"  TEXT(30) NOT NULL,"league"  TEXT(100),"tournament"  TEXT(100),"goblinValue"  TEXT(100));'
+                '("id"  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"idDiscord"  TEXT(30) NOT NULL,"league"  TEXT(100),"tournament"  TEXT(100),"goblinValue"  TEXT(100));',
+            'CREATE TABLE "coaches" ' +
+                '( "id"  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "idDiscord"  TEXT NOT NULL, "coachName"  TEXT, "discordName"  TEXT, CONSTRAINT "idDiscord");'
         ]
 
 
