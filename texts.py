@@ -34,6 +34,8 @@ class EN:
         ("```bb2!iam <coach name>```", "Link your Discord acc to your BloodBowl nickname, changing the coach name by your discord id on the messages.")
         ]
     ROUND= "Round %s"
+    TEAM_NAME = "Team name"
+    COACH = "coach"
     LAST_UPDATE = "Last update at %s"
     LOCAL_TEAM = "Local Team"
     VS = "VS"
