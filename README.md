@@ -44,14 +44,17 @@ SPYURLBASE = http://www.mordrek.com/goblinSpy/Overview/
 ```
 Once .env file is created, set your bot's token (only on .env file, not in .env.simple file), which you can find in the Bots section of your application settings at https://discord.com/developers/ applications. Remember that you should **NOT** share the bot token with anyone.
 
-## RUN
+## Setup
+Execute the script ```setupDB.py``` in order to create the database with the empty tables
+
+## Run
 Just execute BloodBowlManager.py on python 3 and wait for the _bot up!_ message. If you dont know how to execute it, just put the following command on the terminal:
 ```
 python3 .\BloodBowlManager.py
 ```
 Invite your bot to your Discord Server and use the bot commands to get the Blood Bowl league data.
 
-## COMMANDS
+## Commands
 Currently, the following commands has been implemented:
 * **bb2!help** -> Shows bot info with the commands
 * **bb2!config** -> Configure a tournament on your Discord Server. Add the tournament name and the league name on quotes as parameters.
@@ -62,4 +65,9 @@ Currently, the following commands has been implemented:
      - Example: bb2!round 3
 
 
+## Developed by
+* [Paula (Latra) Gallucci Zurita](https://github.com/latra)
+* [Mikel (Mikel) Ocejo](https://github.com/mikel-ocejo)
 
+## Thanks to
+* [Andreas (Mordrek) Harrison](https://github.com/mordrek) for [GoblinSpy](http://www.mordrek.com/goblinSpy)

@@ -1,78 +1,204 @@
 import goblinSpy, re, discord, os, requests, bloodBowl
+from discord.utils import get
+
 class Commands:
     def __init__(self, ctx):
         self.ctx = ctx
+        self.goblin = goblinSpy.GoblinSpy(self.ctx.message.guild.id)
+
+    async def help(self):
+        command = self.ctx.message.content.split()
+        # Select witch help has to show
+        if len(command) > 1:
+            if command[1] == '1':
+                await self.help_setup()
+                return
+            elif command[1] == '2':
+                await self.help_commands()
+                return
+            elif command[1] == '3':
+                await self.help_developing()
+                return
+        # If not list has been selected, it will show the default help, listing the others
+        await self.help_generic()
+
+    async def help_generic(self):
+        # List the help chapters
+        embed = discord.Embed(
+            colour = discord.Colour.red(),
+            title="Blood Bowl Manager",
+            description="To see a page, just add the page number after the bb2!help command.\nLike this: ```bb2!help 2```"
+        )
+        embed.set_thumbnail(url="https://i.imgur.com/8eptQlM.png")
+        embed.add_field(name= "Chapter 1: Set up your tournament", value="Check the firsts steps on Blood Bowl Bot", inline=False)
+        embed.add_field(name= "Chapter 2: Blood Bowl Commands", value="Check the available commands on Blood Bowl Bot after configure your tournament", inline=False)
+        #embed.add_field(name= "Chapter 3: About us", value="Do you need more help? Any question or suggestion? Check this section to know how to contact with us.", inline=False)
+
+        await self.ctx.send(embed = embed)
+
+    async def help_setup(self):
+        # Shows how to setup the bot on a new server
+        embed = discord.Embed(
+            colour = discord.Colour.red(),
+            title="Setup - Blood Bowl Manager",
+            description="Follow the next steps to configure your tournament on the discord server"
+        )
+        embed.set_thumbnail(url="https://i.imgur.com/8eptQlM.png")
+        embed.add_field(name= "#1 Allow GoblinSpy recover data from your tournament.", value="Join http://www.mordrek.com/goblinSpy/web/activate.html?, introduce your tournament data and click on \"Activate\" button.", inline=False)
+        embed.add_field(name= "#2 Configure the tournament on the bot", value="Use ```bb2!config \"League name\" \"Tournament name\"```, including quotation marks, to configure the tournament.", inline=False)
+        embed.add_field(name= "#3 Install the custom emojis", value="Install the following emoji package on your server with the races icons", inline=False)
+
+        await self.ctx.send(embed = embed)
+    async def help_commands(self):
+        # Shows the available commands
+        embed = discord.Embed(
+            colour = discord.Colour.red(),
+            title="Commands - Blood Bowl Manager",
+            description=" Use the following commands to get info about the configured tournament. Newly played matches may take a while to update."
+        )
+        embed.set_thumbnail(url="https://i.imgur.com/8eptQlM.png")
+        embed.add_field(name= "```bb2!teams```", value="List all teams from the tournament", inline=False)
+        embed.add_field(name= "```bb2!round <round number>```", value="Show the matches of the selected round. If no round is specified, it will show the current round.", inline=False)
+        embed.add_field(name= "```bb2!iam <coach name>```", value="Link your Discord acc to your BloodBowl nickname, changing the coach name by your discord id on the messages.", inline=False)
+
+        await self.ctx.send(embed = embed)
+    async def help_developing(self):
+        # Shows how to contact with the developing team
+        # TODO
+        embed = discord.Embed(
+            colour = discord.Colour.red(),
+            title="About Us - Blood Bowl Manager",
+            description=""
+        )
+        embed.set_thumbnail(url="https://i.imgur.com/8eptQlM.png")
 
 
+        await self.ctx.send(embed = embed)
+        
     async def configure(self):
+        #Configure the server with the passed parammeters
         regex_exp = "\"(.*)\" \"(.*)\""
-        goblin = goblinSpy.GoblinSpy(self.ctx.message.guild.id)
         command = re.split(regex_exp, self.ctx.message.content)
         
-        if (goblin.league_name):
+        if self.goblin.goblin_token:
+            # If the server is already configured, return an error
             await self.ctx.send(content="Ya existe una liga configurada en este servidor")
         else:
             if len(command) >= 3:
-                goblin.Create_Goblin(command[1], command[2])
-                print(goblin)
+                # Add the server to DB and reutn OK
+                self.goblin.Create_Goblin(command[1], command[2])
                 await self.ctx.send(content="Servidor configurado correctamente!")
             else:
-                await self.ctx.send(content="Utiliza el comando bb2!config \"Nombre de la liga\" \"Nombre del torneo\", incluyendo las comillas, para configurar la liga")
+                # If there are not valid params, return an error
+
+                await self.ctx.send(content="Utiliza el comando ```bb2!config \"Nombre de la liga\" \"Nombre del torneo\"```, incluyendo las comillas, para configurar la liga")
 
     async def reset(self):
-        goblin = goblinSpy.GoblinSpy(self.ctx.message.guild.id)
-            
-        if (goblin.league_name):
-            goblin.Delete_Goblin()
-            await self.ctx.send(content="Se ha borrado la configuración de liga")
+        # Delete the server configuration
+        #Only can be do it by an administrator
+        if (self.ctx.message.author.server_permissions.administrator):
+            if (self.goblin.league_name):
+                self.goblin.Delete_Goblin()
+                await self.ctx.send(content="Se ha borrado la configuración de liga")
+            else:
+                await self.ctx.send(content="No hay ninguna liga configurada")
         else:
-            await self.ctx.send(content="No hay ninguna liga configurada")
+            await self.ctx.send(content="Solo los usuarios con permisos de administrador pueden eliminar la configuración de la liga")
 
     async def teams(self):
-        goblin = goblinSpy.GoblinSpy(self.ctx.message.guild.id)
-        if not goblin.goblin_token:
+        #Shows the competition team list
+        if not self.goblin.goblin_token:
             await self.ctx.send(content="No hay ninguna liga configurada")
         else:
-            goblin_request = requests.get(os.getenv('SPYURLBASE') + 'overview.' + goblin.goblin_token + '.json')
-            if goblin_request.ok:
-                league_data = goblin_request.json()
-                data_teams = league_data['LeagueStandings']
-                teams = ('Teams on %s:\n' % goblin.league_name)
-                ranking = 1
-                for team in data_teams["rows"]:
-                    teams += ("#%i %s%s (%s)\n" % (ranking, bloodBowl.Get_Race(int(team[16])), team[17], team[10]))
-                    ranking += 1
-                await self.ctx.send(content=teams)
+            #Get data from GoblinSpy
+            goblin_data = self.goblin.Get_Goblin_Data()
+            if goblin_data:
+                data_teams = goblin_data['LeagueStandings']
+                teams = ""
+                coach = ""
+                ranking = ""
+                for index in range (0, len(data_teams["rows"])):
+                    race_logo = get(self.ctx.message.guild.emojis, name=bloodBowl.Get_Race(int(data_teams["rows"][index][16])))
+                    if not race_logo: race_logo = ":grey_question:"
+                    teams += "%s %s\n\n" %(race_logo, data_teams["rows"][index][17])
+                    coach += "%s\n\n" % (self.goblin.Get_Coach(data_teams["rows"][index][10]))
+                    ranking += "%s\n\n" % (bloodBowl.Get_Ranking(index + 1))
+                embed = discord.Embed(
+                   colour = discord.Colour.red(),
+                   title = "Teams on %s" % self.goblin.tournament,
+                )
+                embed.add_field(name = ":trophy:", value=ranking, inline=True)
+                embed.add_field(name = "Team name", value=teams, inline=True)
+                embed.add_field(name = "Coach", value=coach, inline=True)
+
+                await self.ctx.send(embed=embed)
             else:
                 await self.ctx.send(content="Error al recuperar los datos de la liga. Asegurate que ha sido dada de alta en: http://www.mordrek.com/goblinSpy/web/goblinSpy.html")
     async def round(self):
-        goblin = goblinSpy.GoblinSpy(self.ctx.message.guild.id)
-        if not goblin.goblin_token:
+        #Shows the specifyied or current round
+        if not self.goblin.goblin_token:
             await self.ctx.send(content="No hay ninguna liga configurada")
         else:
-            goblin_data = goblin.GetGoblinData()
-            if goblin_data:
+            #Get data from GoblinSpy
+            goblin_data = self.goblin.Get_Goblin_Data()
+            if goblin_data and goblin_data["Schedule"]:
                 next_matches = []
                 command = self.ctx.message.content.split()
+                embed = discord.Embed(
+                   colour = discord.Colour.red()
+                )
                 if len(command) == 1:
                     actual_round = 0
+                    # If no round has been specifyied, it will calculate the current round
                     for match in goblin_data["Schedule"]["rows"]:
                         if match[10] == 'scheduled' and (match[8] == actual_round or actual_round == 0):
                             actual_round = match[8]
                             break
+                    embed.title="Current round: Round %s" % actual_round
+
                 else:
+                    # Else specify the round
                     actual_round = command[1]
+                    embed.title="Round %s" % actual_round
+
                 for match in goblin_data["Schedule"]["rows"]:
                     if match[8] == actual_round:
                         next_matches.append(match)
                     if match[8] > actual_round:
                         break
-                response = 'Current Round (round %i):\n' % int(actual_round)
+                # Add local team and visitor team (and result if the match has ended) on respective strings. Every string will be on a different column on embed message
+                local_teams = ""
+                visitor_teams = ""
+                results = ""
                 for match in next_matches:
+                    local_teams += "%s\n\n" % (match[19] )
+                    visitor_teams += " %s\n\n" % (  match[25],)
                     if match[10] == 'played':
-                        response += '%s (%s) %i VS %i %s (%s)\n'% (match[19], match[17], int(match[29]), int(match[30]) ,  match[25], match[23])
+                        results += "%i - %i\n\n" % (int(match[29]), int(match[30]))
                     else:
-                        response += '%s (%s) VS %s (%s)\n' % (match[19], match[17], match[25], match[23])
-                await self.ctx.send(content=response)
+                        results += "? - ?\n\n"
+                embed.add_field(name = "Local Team", value=local_teams, inline=True)
+                embed.add_field(name = "VS", value=results, inline=True)
+                embed.add_field(name = "Visitor Team", value=visitor_teams, inline=True)
+                await self.ctx.send(embed=embed)
+                
             else:
-                await self.ctx.send(content="Error al recuperar los datos de la liga. Asegurate que ha sido dada de alta en: http://www.mordrek.com/goblinSpy/web/goblinSpy.html")
+                await self.ctx.send(content="No hay datos de la liga o no se trata de una liga con rondas")
+
+    async def this_is_my_team(self):
+        if not self.goblin.goblin_token:
+            await self.ctx.send(content="No hay ninguna liga configurada")
+        else:
+            command = self.ctx.message.content.split()
+            if (len(command) > 1):
+                result = self.goblin.Set_Coach(command[1] , str(self.ctx.message.author), self.ctx.message.author.id)
+                await self.ctx.send(content=result)
+            else:
+                await self.ctx.send(content="Utiliza el comando ```bb2!iam {Nombre de entrenador}```, para indicar que usuario eres")
+
+    async def my_next_match(self):
+        if not self.goblin.goblin_token:
+            await self.ctx.send(content="No hay ninguna liga configurada")
+        else:
+            pass
+           # 
